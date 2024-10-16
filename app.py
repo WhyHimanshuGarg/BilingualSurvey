@@ -12,7 +12,7 @@ CORS(app)  # Allow cross-origin requests
 
 # Configure the SQLite database or PostgreSQL if provided
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database', 'sqlite:///local.db'
+    'DATABASE_URL', 'postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database'
 )
 app.config['SECRET_KEY'] = 'hello'  # Set your secret key for sessions
 
