@@ -144,6 +144,10 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('message').textContent = data.message;
+
+                // Clear survey fields after submission
+                document.getElementById('paragraph1').selectedIndex = 0;
+                document.getElementById('paragraph2').selectedIndex = 0;
             })
             .catch(error => {
                 console.error('Error:', error);

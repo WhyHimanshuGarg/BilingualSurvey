@@ -4,23 +4,24 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user
+from flask_login import LoginManager, current_user, login_user, logout_user, UserMixin
 import os
+import json
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
-# Configure the SQLite database or PostgreSQL if provided
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database')
+# Configure the PostgreSQL database or SQLite if not provided
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL', 'sqlite:///local.db'
+)
 app.config['SECRET_KEY'] = 'your_secret_key'  # Set your secret key for sessions
 
 db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)  # Initialize the LoginManager with the app
-login_manager.login_view = 'login'  # Redirect to login view if not authenticated
+login_manager = LoginManager(app)
 
 # User model
-class User(db.Model, UserMixin):  # Inherit from UserMixin
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
@@ -44,11 +45,12 @@ admin = Admin(app, name='Admin Panel', template_mode='bootstrap3')
 # Register models to the admin panel
 class AdminModelView(ModelView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.username == 'admin'  # Change this logic if necessary
+        return current_user.is_authenticated and current_user.username == 'admin'
 
 admin.add_view(AdminModelView(User, db.session))
 admin.add_view(AdminModelView(SurveyResponse, db.session))
 
+# Load the logged-in user
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -75,7 +77,7 @@ def register():
     if user:
         return jsonify({"success": False, "message": "Username already exists"}), 409
 
-    # Use pbkdf2:sha256 hashing method
+    # Hash the password
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
     new_user = User(username=username, password=hashed_password)
     db.session.add(new_user)
@@ -110,17 +112,28 @@ def submit_survey():
         return jsonify({"success": False, "message": "Request must be JSON"}), 400
 
     data = request.json
-    survey_data = data.get('survey_data')
+    paragraph1 = data.get('paragraph1')
+    paragraph2 = data.get('paragraph2')
 
-    if not survey_data:
+    if not paragraph1 or not paragraph2:
         return jsonify({"success": False, "message": "Incomplete survey"}), 400
 
     # Save survey response
-    new_response = SurveyResponse(user_id=current_user.id, survey_data=survey_data)
+    survey_data = {
+        "paragraph1": paragraph1,
+        "paragraph2": paragraph2
+    }
+    new_response = SurveyResponse(user_id=current_user.id, survey_data=json.dumps(survey_data))  # Store as JSON string
     db.session.add(new_response)
     db.session.commit()
 
     return jsonify({"success": True, "message": "Survey submitted successfully!"})
+
+# Route to logout
+@app.route('/logout', methods=['POST'])
+def logout():
+    logout_user()
+    return jsonify({"success": True, "message": "Logged out successfully."})
 
 if __name__ == '__main__':
     app.run(debug=True)
