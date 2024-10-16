@@ -2,25 +2,51 @@ from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+from flask_login import LoginManager, current_user, login_user, logout_user
 import os
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
-# Configure the SQLite database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database', 'sqlite:///local.db')
+# Configure the SQLite database or PostgreSQL if provided
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database', 'sqlite:///local.db'
+)
+app.config['SECRET_KEY'] = 'hello'  # Set your secret key for sessions
 
 db = SQLAlchemy(app)
 
-# Define the User model
+# User model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
 
+# Survey Response model
+class SurveyResponse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    survey_data = db.Column(db.Text, nullable=False)  # Store JSON responses or formatted text
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    user = db.relationship('User', backref=db.backref('responses', lazy=True))
+
 # Create the database tables (if they don't exist yet)
 with app.app_context():
     db.create_all()
+
+# Setup Flask-Admin
+admin = Admin(app, name='Admin Panel', template_mode='bootstrap3')
+
+# Register models to the admin panel
+class AdminModelView(ModelView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.username == 'admin'
+
+admin.add_view(AdminModelView(User, db.session))
+admin.add_view(AdminModelView(SurveyResponse, db.session))
 
 # Route to serve the homepage
 @app.route('/')
@@ -67,6 +93,7 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.password, password):
+        login_user(user)
         return jsonify({"success": True, "message": "Login successful!"})
     else:
         return jsonify({"success": False, "message": "Invalid username or password"}), 401
@@ -78,13 +105,16 @@ def submit_survey():
         return jsonify({"success": False, "message": "Request must be JSON"}), 400
 
     data = request.json
-    paragraph1 = data.get('paragraph1')
-    paragraph2 = data.get('paragraph2')
+    survey_data = data.get('survey_data')
 
-    if not paragraph1 or not paragraph2:
+    if not survey_data:
         return jsonify({"success": False, "message": "Incomplete survey"}), 400
 
-    # You can save the survey results here
+    # Save survey response
+    new_response = SurveyResponse(user_id=current_user.id, survey_data=survey_data)
+    db.session.add(new_response)
+    db.session.commit()
+
     return jsonify({"success": True, "message": "Survey submitted successfully!"})
 
 if __name__ == '__main__':
