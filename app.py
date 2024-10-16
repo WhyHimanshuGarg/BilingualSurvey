@@ -4,35 +4,25 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from flask_login import LoginManager, current_user, login_user, logout_user, UserMixin
+from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user
 import os
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
 # Configure the SQLite database or PostgreSQL if provided
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL', 'postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database'
-)
-app.config['SECRET_KEY'] = 'hello'  # Set your secret key for sessions
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local.db')
+app.config['SECRET_KEY'] = 'your_secret_key'  # Set your secret key for sessions
 
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'  # Redirect to login view if not authenticated
 
 # User model
-class User(db.Model, UserMixin):
+class User(db.Model, UserMixin):  # Inherit from UserMixin
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-
-    # Implementing UserMixin properties
-    def is_active(self):
-        return True  # You can add your logic for active users
-
-    def is_authenticated(self):
-        return True  # This will always return True for authenticated users
-
-    def is_anonymous(self):
-        return False  # This will always return False for logged-in users
 
 # Survey Response model
 class SurveyResponse(db.Model):
@@ -53,10 +43,14 @@ admin = Admin(app, name='Admin Panel', template_mode='bootstrap3')
 # Register models to the admin panel
 class AdminModelView(ModelView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.username == 'admin'
+        return current_user.is_authenticated and current_user.username == 'admin'  # Change this logic if necessary
 
 admin.add_view(AdminModelView(User, db.session))
 admin.add_view(AdminModelView(SurveyResponse, db.session))
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Route to serve the homepage
 @app.route('/')
