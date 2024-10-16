@@ -13,8 +13,8 @@ This project is a bilingual survey web application built using Flask. It allows 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<username>/<repository>.git
+   git clone https://github.com/WhyHimanshuGarg/BilingualSurvey.git
 
 2. Navigate to the project folder:
     ```bash
-    cd <repository>
+    cd Bilingual Survey
