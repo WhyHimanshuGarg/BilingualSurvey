@@ -4,7 +4,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from flask_login import LoginManager, current_user, login_user, logout_user
+from flask_login import LoginManager, current_user, login_user, logout_user, UserMixin
 import os
 
 app = Flask(__name__)
@@ -19,10 +19,20 @@ app.config['SECRET_KEY'] = 'hello'  # Set your secret key for sessions
 db = SQLAlchemy(app)
 
 # User model
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+
+    # Implementing UserMixin properties
+    def is_active(self):
+        return True  # You can add your logic for active users
+
+    def is_authenticated(self):
+        return True  # This will always return True for authenticated users
+
+    def is_anonymous(self):
+        return False  # This will always return False for logged-in users
 
 # Survey Response model
 class SurveyResponse(db.Model):
