@@ -11,11 +11,12 @@ app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
 # Configure the SQLite database or PostgreSQL if provided
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://bilingual_survey_database_user:NdlufoDV4sJwchtQtSagx2q5NzmmLhUI@dpg-cs7q4ktumphs73abpsjg-a/bilingual_survey_database')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local.db')
 app.config['SECRET_KEY'] = 'your_secret_key'  # Set your secret key for sessions
 
 db = SQLAlchemy(app)
-login_manager = LoginManager(app)
+login_manager = LoginManager()
+login_manager.init_app(app)  # Initialize the LoginManager with the app
 login_manager.login_view = 'login'  # Redirect to login view if not authenticated
 
 # User model
