@@ -1,0 +1,108 @@
+/* General Page Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+h1 {
+    text-align: center;
+    color: #4CAF50;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    transition: max-width 0.3s ease;
+}
+
+/* Full-width after login */
+.container.full-width {
+    max-width: 100%;
+    width: 90%;
+    height: 100%;
+    padding: 40px;
+    display: block;
+}
+
+h2 {
+    text-align: left;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Links Styling */
+.link {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.link a {
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+.link a:hover {
+    text-decoration: underline;
+}
+
+/* Error and success messages */
+.message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+/* Survey form styling */
+select {
+    margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+        width: 90%;
+    }
+}
